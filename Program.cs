@@ -1,5 +1,10 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ZunoksBackend.Data;
+using ZunoksBackend.Models;
 using ZunoksBackend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,9 +30,44 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<ZunoksDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        options.Password.RequiredLength = 8;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireDigit = true;
+    })
+    .AddEntityFrameworkStores<ZunoksDbContext>()
+    .AddDefaultTokenProviders();
+
+var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured");
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        };
+    });
+
 builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<ICsvService, CsvService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IReComService, ReComService>();
+builder.Services.AddScoped<IReComAdminService, ReComAdminService>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IdentitySeeder>();
 
 var app = builder.Build();
 
@@ -44,6 +84,7 @@ if (builder.Configuration.GetValue("UseHttpsRedirection", false))
 
 app.UseCors("AllowFrontend");
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/", () => Results.Ok(new
@@ -54,7 +95,10 @@ app.MapGet("/", () => Results.Ok(new
     {
         "/api/survey",
         "/admin/api/submissions",
-        "/admin/api/stats/summary"
+        "/admin/api/stats/summary",
+        "/api/recom/leads",
+        "/api/recom/auth/login",
+        "/admin/recom/api/leads/paged",
     }
 }));
 
@@ -63,7 +107,10 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ZunoksDbContext>();
-    dbContext.Database.EnsureCreated();
+    dbContext.Database.Migrate();
+
+    var seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
+    await seeder.SeedAsync();
 }
 
 app.Run();

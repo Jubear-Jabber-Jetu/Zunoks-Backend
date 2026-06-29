@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ZunoksBackend.Models;
 
 namespace ZunoksBackend.Data;
 
-public class ZunoksDbContext : DbContext
+public class ZunoksDbContext : IdentityDbContext<ApplicationUser>
 {
     public ZunoksDbContext(DbContextOptions<ZunoksDbContext> options) : base(options)
     {
@@ -12,6 +13,8 @@ public class ZunoksDbContext : DbContext
     public DbSet<ZunoksSubmission> ZunoksSubmissions { get; set; }
     public DbSet<ZunoksResponse> ZunoksResponses { get; set; }
     public DbSet<SelectedModule> SelectedModules { get; set; }
+    public DbSet<ReComLead> ReComLeads { get; set; }
+    public DbSet<ReComLeadService> ReComLeadServices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,6 +30,12 @@ public class ZunoksDbContext : DbContext
             .HasOne(m => m.ZunoksSubmission)
             .WithMany(s => s.SelectedModules)
             .HasForeignKey(m => m.ZunoksSubmissionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ReComLeadService>()
+            .HasOne(s => s.ReComLead)
+            .WithMany(l => l.Services)
+            .HasForeignKey(s => s.ReComLeadId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
