@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZunoksBackend.Data;
 
@@ -11,9 +12,11 @@ using ZunoksBackend.Data;
 namespace ZunoksBackend.Migrations
 {
     [DbContext(typeof(ZunoksDbContext))]
-    partial class ZunoksDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709033801_AddScreeningSurvey")]
+    partial class AddScreeningSurvey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

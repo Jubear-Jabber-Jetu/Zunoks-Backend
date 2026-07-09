@@ -25,9 +25,15 @@ public class IdentitySeeder
     public async Task SeedAsync()
     {
         const string adminRole = "ReComAdmin";
+        const string screeningAdminRole = "ScreeningAdmin";
         if (!await _roleManager.RoleExistsAsync(adminRole))
         {
             await _roleManager.CreateAsync(new IdentityRole(adminRole));
+        }
+
+        if (!await _roleManager.RoleExistsAsync(screeningAdminRole))
+        {
+            await _roleManager.CreateAsync(new IdentityRole(screeningAdminRole));
         }
 
         var email = _configuration["ReComAdmin:Email"];
@@ -62,6 +68,11 @@ public class IdentitySeeder
         if (!await _userManager.IsInRoleAsync(user, adminRole))
         {
             await _userManager.AddToRoleAsync(user, adminRole);
+        }
+
+        if (!await _userManager.IsInRoleAsync(user, screeningAdminRole))
+        {
+            await _userManager.AddToRoleAsync(user, screeningAdminRole);
         }
     }
 }

@@ -66,8 +66,12 @@ builder.Services.AddScoped<ICsvService, CsvService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IReComService, ReComService>();
 builder.Services.AddScoped<IReComAdminService, ReComAdminService>();
+builder.Services.AddScoped<IScreeningSurveyService, ScreeningSurveyService>();
+builder.Services.AddScoped<IScreeningAdminService, ScreeningAdminService>();
+builder.Services.AddScoped<IScreeningExportService, ScreeningExportService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IdentitySeeder>();
+builder.Services.AddScoped<ScreeningSurveySeeder>();
 
 var app = builder.Build();
 
@@ -99,6 +103,10 @@ app.MapGet("/", () => Results.Ok(new
         "/api/recom/leads",
         "/api/recom/auth/login",
         "/admin/recom/api/leads/paged",
+        "/api/screening/active",
+        "/api/screening/submit",
+        "/api/screening/auth/login",
+        "/admin/screening/api/dashboard",
     }
 }));
 
@@ -111,6 +119,9 @@ using (var scope = app.Services.CreateScope())
 
     var seeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
     await seeder.SeedAsync();
+
+    var screeningSeeder = scope.ServiceProvider.GetRequiredService<ScreeningSurveySeeder>();
+    await screeningSeeder.SeedAsync();
 }
 
 app.Run();
